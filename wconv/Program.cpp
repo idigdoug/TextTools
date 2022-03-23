@@ -5,6 +5,7 @@
 #include "WConv.h"
 
 #include <ArgParser.h>
+#include <TextToolsCommon.h>
 
 static int
 Usage()
@@ -40,6 +41,7 @@ Converts text from one encoding to another. Similar to the "iconv" tool.
 
 If -l or --list is specified, show supported encodings and exit.
 If -h or --help is specified, show usage and exit.
+If --version is specified, show the version number of wconv and then exit.
 
 ENCODING names ignore case and punctuation (e.g. 'utf-8' is the same as
 'UTF8'). They may be formatted as digits (Windows code page identifier), 'CP'
@@ -71,6 +73,13 @@ Examples:
     return 1;
 }
 
+static int
+Version()
+{
+    fputs(TEXTTOOLS_VERSION_STR("wconv"), stdout);
+    return 1;
+}
+
 int __cdecl
 wmain(int argc, _In_count_(argc) PWSTR argv[])
 {
@@ -80,6 +89,7 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
     {
         WConv wconv;
         bool showHelp = false;
+        bool showVersion = false;
         bool showList = false;
 
         ArgParser ap(AppName, argc, argv);
@@ -171,6 +181,10 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                         ap.SetArgErrorIfFalse(wconv.SetOutputEncoding(val, "--to-code"));
                     }
                 }
+                else if (ap.CurrentArgNameMatches(1, L"version"))
+                {
+                    showVersion = true;
+                }
                 else
                 {
                     ap.PrintLongArgError();
@@ -243,6 +257,10 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
         if (showHelp)
         {
             returnCode = Usage();
+        }
+        else if (showVersion)
+        {
+            returnCode = Version();
         }
         else if (ap.ArgError())
         {
