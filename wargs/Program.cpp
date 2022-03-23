@@ -5,6 +5,7 @@
 #include "WArgs.h"
 
 #include <ArgParser.h>
+#include <TextToolsCommon.h>
 
 static int
 Usage()
@@ -51,6 +52,7 @@ If no COMMAND is specified, the default command is echo (cmd.exe /c echo).
                              argument would force the command line to exceed
                              MAXCHARS.
 -h, -?, --help               Show this usage information and then exit.
+--version                    Show the version number of wargs and then exit.
 
 ENCODING names ignore case and punctuation (e.g. 'utf-8' is the same as
 'UTF8'). They may be formatted as digits (Windows code page identifier), 'CP'
@@ -63,6 +65,13 @@ UTF encoding should override the specified encoding.
     return 1;
 }
 
+static int
+Version()
+{
+    fputs(TEXTTOOLS_VERSION_STR("wargs"), stdout);
+    return 1;
+}
+
 int __cdecl
 wmain(int argc, _In_count_(argc) PWSTR argv[])
 {
@@ -72,6 +81,7 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
     {
         WArgs wargs;
         bool showHelp = false;
+        bool showVersion = false;
         exitCode = 0;
 
         ArgParser ap(AppName, argc, argv);
@@ -180,9 +190,13 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                 {
                     wargs.SetShowLimits();
                 }
-                else if (ap.CurrentArgNameMatches(1, L"verbose"))
+                else if (ap.CurrentArgNameMatches(4, L"verbose"))
                 {
                     wargs.SetVerbose();
+                }
+                else if (ap.CurrentArgNameMatches(4, L"version"))
+                {
+                    showVersion = true;
                 }
                 else
                 {
@@ -292,6 +306,10 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
         if (showHelp)
         {
             exitCode = Usage();
+        }
+        else if (showVersion)
+        {
+            exitCode = Version();
         }
         else if (ap.ArgError())
         {

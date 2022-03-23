@@ -4,6 +4,13 @@
 #pragma once
 #include <memory>
 
+#define TEXTTOOLS_VERSION "v1.0.1"
+#define TEXTTOOLS_LICENSE "Distributed under the terms of the MIT License.\nWritten by Doug Cook."
+
+#define TEXTTOOLS_VERSION_STR(toolNameString) "\n" \
+    toolNameString " (TextUtils) " TEXTTOOLS_VERSION "\n" \
+    TEXTTOOLS_LICENSE "\n" \
+
 namespace TextToolsImpl
 {
     struct CloseHandle_delete
