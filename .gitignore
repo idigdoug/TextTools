@@ -1,5 +1,7 @@
 *.suo
 *.user
+[Oo]bjArm64/
 [Oo]bjx64/
 [Oo]bjWin32/
+Release/
 .vs/

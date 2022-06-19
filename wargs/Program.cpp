@@ -120,6 +120,13 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                 {
                     wargs.SetExitIfSizeExceeded();
                 }
+                else if (ap.CurrentArgNameMatches(1, L"from-code"))
+                {
+                    if (ap.GetLongArgVal(val, false))
+                    {
+                        ap.SetArgErrorIfFalse(wargs.SetInputEncoding(val, "--from-code"));
+                    }
+                }
                 else if (ap.CurrentArgNameMatches(1, L"help"))
                 {
                     showHelp = true;
@@ -239,6 +246,12 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                         if (ap.ReadShortArgVal(val, true))
                         {
                             wargs.SetEofStr(val, "-E");
+                        }
+                        break;
+                    case 'f':
+                        if (ap.ReadShortArgVal(val, false))
+                        {
+                            ap.SetArgErrorIfFalse(wargs.SetInputEncoding(val, "-f"));
                         }
                         break;
                     case 'I':
