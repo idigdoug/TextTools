@@ -197,7 +197,7 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                     switch (ap.CurrentArgChar())
                     {
                     case 'f':
-                        if (ap.ReadShortArgVal(val, false))
+                        if (ap.ReadNextArgVal(val, false))
                         {
                             ap.SetArgErrorIfFalse(wconv.SetInputEncoding(val, "-f"));
                         }
@@ -207,7 +207,7 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                         showHelp = true;
                         break;
                     case 'i':
-                        if (ap.ReadShortArgVal(val, true))
+                        if (ap.ReadNextArgVal(val, true))
                         {
                             wconv.AddInputFilename(val);
                         }
@@ -216,13 +216,13 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                         showList = true;
                         break;
                     case 'n':
-                        if (ap.ReadShortArgVal(val, false))
+                        if (ap.ReadNextArgVal(val, false))
                         {
                             ap.SetArgErrorIfFalse(wconv.SetNewline(val, "-n"));
                         }
                         break;
                     case 'o':
-                        if (ap.ReadShortArgVal(val, false))
+                        if (ap.ReadNextArgVal(val, false))
                         {
                             wconv.SetOutputFilename(val, "-o");
                         }
@@ -234,7 +234,7 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                         wconv.SetSilent();
                         break;
                     case 't':
-                        if (ap.ReadShortArgVal(val, false))
+                        if (ap.ReadNextArgVal(val, false))
                         {
                             ap.SetArgErrorIfFalse(wconv.SetOutputEncoding(val, "-t"));
                         }

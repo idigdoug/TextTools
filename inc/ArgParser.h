@@ -173,27 +173,51 @@ public:
     bool
     MoveNextArgChar() noexcept;
 
-    // Consumes and returns the value of the current short arg, null if none.
+    // Consumes and returns the remainder of the current short arg.
+    // Example: "-ab123", if current ArgChar is 'b', consumes and returns "123".
+    _Ret_z_ PCWSTR
+    ReadArgCharsVal() noexcept;
+
+    // Consumes and returns the value of next arg, null if none.
+    // Example: "-abc 123", if current ArgChar is 'b', consumes and returns "123".
     _Ret_opt_z_ PCWSTR
-    ReadShortArgVal() noexcept;
+    ReadNextArgVal() noexcept;
 
     // Returns the value of the current long arg, null if none.
     _Ret_opt_z_ PCWSTR
     GetLongArgVal() const noexcept;
 
-    // Consumes and returns the value of the current short arg. Prints error
+    // Consumes and returns the remainder of the current short arg. Prints error
     // message if none.
+    //
+    // Example: "-ab123", if current ArgChar is 'b', consumes and returns "123".
     bool
-    ReadShortArgVal(std::wstring_view& val, bool emptyOk) noexcept;
+    ReadArgCharsVal(std::wstring_view& val, bool emptyOk) noexcept;
+
+    // Consumes and returns the value of next arg. Prints error
+    // message and returns false if none.
+    //
+    // Example: "-abc 123", if current ArgChar is 'b', consumes and returns "123".
+    bool
+    ReadNextArgVal(std::wstring_view& val, bool emptyOk) noexcept;
 
     // Returns the value of the current long arg. Prints error message if none.
     bool
     GetLongArgVal(std::wstring_view& val, bool emptyOk) noexcept;
 
-    // Consumes and returns the value of the current short arg. Prints error message
-    // if none or invalid.
+    // Consumes and returns the remainder of the current short arg. Prints error
+    // message if none.
+    //
+    // Example: "-ab123", if current ArgChar is 'b', consumes and returns "123".
     bool
-    ReadShortArgVal(unsigned& val, bool zeroOk, int radix = 0) noexcept;
+    ReadArgCharsVal(unsigned& val, bool zeroOk, int radix = 0) noexcept;
+
+    // Consumes and returns the value of next arg. Prints error message
+    // if none or invalid.
+    //
+    // Example: "-abc 123", if current ArgChar is 'b', consumes and returns "123".
+    bool
+    ReadNextArgVal(unsigned& val, bool zeroOk, int radix = 0) noexcept;
 
     // Returns the value of the current long arg. Prints error message if none
     // or invalid.

@@ -270,14 +270,11 @@ WArgs::SetEofStr(std::wstring_view value, PCSTR argName)
 void
 WArgs::SetReplaceStr(std::wstring_view value, PCSTR argName)
 {
+    assert(!value.empty());
+
     WarnIfNotEmpty(m_replaceStr.c_str(), argName);
 
     m_replaceStr = value;
-
-    if (m_replaceStr.empty())
-    {
-        m_replaceStr = L"{}";
-    }
 
     if (m_maxArgs > 1)
     {

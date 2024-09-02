@@ -29,12 +29,15 @@ If no COMMAND is specified, the default command is echo (cmd.exe /c echo).
                              parsed as a C wchar_t literal, e.g. "-d$",
                              "-d\t", "-d\x0A" are all accepted.
 -E EOFSTR, --eof=EOFSTR      Stop if any input argument equals EOFSTR.
+-eEOFSTR                     Same as "--eof=EOFSTR" (deprecated).
 -f ENCODING, --from-code=... Encoding of input. Use NNN, cpNNN, utf8,
                              utf8bom, utf16, utf16bom, utf16be, etc.
                              Default: cp0bom (CP_ACP unless BOM present).
 -I REPLSTR, --replace=...    Replace instances of REPLSTR in PARAMS... with
                              line read from input. Splits input at newlines.
+-i[REPLSTR]                  Same as "--replace=REPLSTR" (deprecated).
 -L MAXLINES, --max-lines=... Limits each batch to MAXLINES lines of input.
+-l[MAXLINES]                 Same as "--max-lines=MAXLINES" (deprecated).
 -n MAXARGS, --max-args=...   Limits each batch to MAXARGS arguments.
 -o, --open-tty               Start COMMAND with stdin = console (CONIN$).
 -P MAXPROCS, --max-procs=... Start up to MAXPROCS batches in parallel.
@@ -155,7 +158,9 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                 }
                 else if (ap.CurrentArgNameMatches(5, L"max-lines"))
                 {
-                    if (ap.GetLongArgVal(uval, false, 10))
+                    uval = 1;
+                    if (nullptr == ap.GetLongArgVal() ||   // If value is absent, default to 1.
+                        ap.GetLongArgVal(uval, false, 10)) // If value is present, it must not be 0 or empty.
                     {
                         wargs.SetMaxLines(uval, "--max-lines");
                     }
@@ -188,7 +193,9 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                 }
                 else if (ap.CurrentArgNameMatches(1, L"replace"))
                 {
-                    if (ap.GetLongArgVal(val, true))
+                    val = L"{}";
+                    if (nullptr == ap.GetLongArgVal() || // If value is absent, default to "{}".
+                        ap.GetLongArgVal(val, false))    // If value is present, it must not be empty.
                     {
                         wargs.SetReplaceStr(val, "--replace");
                     }
@@ -225,7 +232,7 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                         ap.SetArgErrorIfFalse(wargs.SetDelimiter(val, "-0"));
                         break;
                     case 'a':
-                        if (ap.ReadShortArgVal(val, false))
+                        if (ap.ReadNextArgVal(val, false))
                         {
                             wargs.SetInputFilename(val, "-a");
                         }
@@ -237,37 +244,58 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                         wargs.SetInputClipboard("-c");
                         break;
                     case 'd':
-                        if (ap.ReadShortArgVal(val, false))
+                        if (ap.ReadNextArgVal(val, false))
                         {
                             ap.SetArgErrorIfFalse(wargs.SetDelimiter(val, "-d"));
                         }
                         break;
                     case 'E':
-                        if (ap.ReadShortArgVal(val, true))
+                        if (ap.ReadNextArgVal(val, true))
                         {
                             wargs.SetEofStr(val, "-E");
                         }
                         break;
+                    case 'e':
+                        wargs.SetEofStr(ap.ReadArgCharsVal(), "-e");
+                        break;
                     case 'f':
-                        if (ap.ReadShortArgVal(val, false))
+                        if (ap.ReadNextArgVal(val, false))
                         {
                             ap.SetArgErrorIfFalse(wargs.SetInputEncoding(val, "-f"));
                         }
                         break;
                     case 'I':
-                        if (ap.ReadShortArgVal(val, true))
+                        if (ap.ReadNextArgVal(val, false))
                         {
                             wargs.SetReplaceStr(val, "-I");
                         }
                         break;
+                    case 'i':
+                        val = ap.ReadArgCharsVal();
+                        if (val.empty())
+                        {
+                            val = L"{}";
+                        }
+                        wargs.SetReplaceStr(val, "-i");
+                        break;
                     case 'L':
-                        if (ap.ReadShortArgVal(uval, false, 10))
+                        if (ap.ReadNextArgVal(uval, false, 10))
                         {
                             wargs.SetMaxLines(uval, "-L");
                         }
                         break;
+                    case 'l':
+                        if (ap.CurrentArgPos()[1] == 0)
+                        {
+                            wargs.SetMaxLines(1, "-l");
+                        }
+                        else if (ap.ReadArgCharsVal(uval, false, 10))
+                        {
+                            wargs.SetMaxLines(uval, "-l");
+                        }
+                        break;
                     case 'n':
-                        if (ap.ReadShortArgVal(uval, false, 10))
+                        if (ap.ReadNextArgVal(uval, false, 10))
                         {
                             wargs.SetMaxArgs(uval, "-n");
                         }
@@ -276,7 +304,7 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                         wargs.SetOpenTty();
                         break;
                     case 'P':
-                        if (ap.ReadShortArgVal(uval, true, 10))
+                        if (ap.ReadNextArgVal(uval, true, 10))
                         {
                             wargs.SetMaxProcs(uval, "-P");
                         }
@@ -288,7 +316,7 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                         wargs.SetNoRunIfEmpty();
                         break;
                     case 's':
-                        if (ap.ReadShortArgVal(uval, false, 10))
+                        if (ap.ReadNextArgVal(uval, false, 10))
                         {
                             wargs.SetMaxChars(uval, "-s");
                         }

@@ -194,17 +194,25 @@ ArgParser::MoveNextArgChar() noexcept
     return m_currentArgPos[0] != 0;
 }
 
+_Ret_z_ PCWSTR
+ArgParser::ReadArgCharsVal() noexcept
+{
+    assert(m_currentArgPos[0] != 0);
+    PCWSTR const shortArgVal = m_currentArgPos + 1;
+
+    // Consume rest of current arg.
+    m_currentArgPos = L" ";
+
+    return shortArgVal;
+}
+
 _Ret_opt_z_ PCWSTR
-ArgParser::ReadShortArgVal() noexcept
+ArgParser::ReadNextArgVal() noexcept
 {
     assert(m_currentArgPos[0] != 0);
 
     PCWSTR shortArgVal;
-    if (m_currentArgPos[1] != 0)
-    {
-        shortArgVal = &m_currentArgPos[1];
-    }
-    else if (m_currentArgIndex + 1 < m_argCount)
+    if (m_currentArgIndex + 1 < m_argCount)
     {
         m_currentArgIndex += 1;
         shortArgVal = m_args[m_currentArgIndex];
@@ -213,9 +221,6 @@ ArgParser::ReadShortArgVal() noexcept
     {
         shortArgVal = nullptr;
     }
-
-    // Consume rest of current arg.
-    m_currentArgPos = L" ";
 
     return shortArgVal;
 }
@@ -228,17 +233,33 @@ ArgParser::GetLongArgVal() const noexcept
     auto pNameEnd = pLongArg + GetLongArgNameLength(pLongArg);
     return pNameEnd[0] ? pNameEnd + 1 : nullptr;
 }
-
 bool
-ArgParser::ReadShortArgVal(std::wstring_view& val, bool emptyOk) noexcept
+ArgParser::ReadArgCharsVal(std::wstring_view& val, bool emptyOk) noexcept
 {
     auto const argChar = CurrentArgChar();
-    auto const shortArgVal = ReadShortArgVal();
+    auto const shortArgVal = ReadArgCharsVal();
+    if (!emptyOk && shortArgVal[0] == 0)
+    {
+        m_argError = true;
+        fprintf(stderr, "%hs: error : Expected VALUE for '-%lcVALUE'\n",
+            m_appName, argChar);
+        return false;
+    }
+
+    val = shortArgVal;
+    return true;
+}
+
+bool
+ArgParser::ReadNextArgVal(std::wstring_view& val, bool emptyOk) noexcept
+{
+    auto const argChar = CurrentArgChar();
+    auto const shortArgVal = ReadNextArgVal();
     if (!shortArgVal ||
         (!emptyOk && shortArgVal[0] == 0))
     {
         m_argError = true;
-        fprintf(stderr, "%hs: error : Expected value for '-%lc value'\n",
+        fprintf(stderr, "%hs: error : Expected VALUE for '-%lc VALUE'\n",
             m_appName, argChar);
         return false;
     }
@@ -254,7 +275,7 @@ ArgParser::GetLongArgVal(std::wstring_view& val, bool emptyOk) noexcept
     if (!emptyOk && (longArgVal == nullptr || longArgVal[0] == 0))
     {
         m_argError = true;
-        fprintf(stderr, "%hs: error : Expected value for '%ls=value'\n",
+        fprintf(stderr, "%hs: error : Expected VALUE for '%ls=VALUE'\n",
             m_appName, CurrentArg());
         return false;
     }
@@ -264,14 +285,56 @@ ArgParser::GetLongArgVal(std::wstring_view& val, bool emptyOk) noexcept
 }
 
 bool
-ArgParser::ReadShortArgVal(unsigned& val, bool zeroOk, int radix) noexcept
+ArgParser::ReadArgCharsVal(unsigned& val, bool zeroOk, int radix) noexcept
 {
     auto const argChar = CurrentArgChar();
-    auto const shortArgVal = ReadShortArgVal();
+    auto const shortArgVal = ReadArgCharsVal();
+    if (shortArgVal[0] == 0)
+    {
+        m_argError = true;
+        fprintf(stderr, "%hs: error : Expected uint32 VALUE for '-%lcVALUE'\n",
+            m_appName, argChar);
+        return false;
+    }
+
+    wchar_t* end;
+    errno = 0;
+    unsigned parsedVal = wcstoul(shortArgVal, &end, radix);
+    if (errno != 0)
+    {
+        m_argError = true;
+        fprintf(stderr, "%hs: error : Range error parsing uint32 '-%lc%ls'\n",
+            m_appName, argChar, shortArgVal);
+        return false;
+    }
+    else if (end[0])
+    {
+        m_argError = true;
+        fprintf(stderr, "%hs: error : Trailing characters following uint32 '-%lc%ls'\n",
+            m_appName, argChar, shortArgVal);
+        return false;
+    }
+    else if (!zeroOk && parsedVal == 0)
+    {
+        m_argError = true;
+        fprintf(stderr, "%hs: error : Expected nonzero uint32 value for '-%lc%ls'\n",
+            m_appName, argChar, shortArgVal);
+        return false;
+    }
+
+    val = parsedVal;
+    return true;
+}
+
+bool
+ArgParser::ReadNextArgVal(unsigned& val, bool zeroOk, int radix) noexcept
+{
+    auto const argChar = CurrentArgChar();
+    auto const shortArgVal = ReadNextArgVal();
     if (!shortArgVal)
     {
         m_argError = true;
-        fprintf(stderr, "%hs: error : Expected uint32 value for '-%lc value'\n",
+        fprintf(stderr, "%hs: error : Expected uint32 VALUE for '-%lc VALUE'\n",
             m_appName, argChar);
         return false;
     }
