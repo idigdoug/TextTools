@@ -261,20 +261,32 @@ ArgParser::GetLongArgVal() const noexcept
 }
 
 bool
-ArgParser::ReadArgCharsVal(std::wstring_view& val, bool emptyOk) noexcept
+ArgParser::ReadArgValImpl(
+    std::wstring_view& val,
+    bool emptyOk,
+    _In_opt_z_ PCWSTR shortArgVal,
+    WCHAR argChar,
+    bool space) noexcept
 {
-    auto const argChar = CurrentArgChar();
-    auto const shortArgVal = ReadArgCharsVal();
-    if (!emptyOk && shortArgVal[0] == 0)
+    if (!shortArgVal ||
+        (!emptyOk && shortArgVal[0] == 0))
     {
         m_argError = true;
-        fprintf(stderr, "%hs: error : Expected VALUE for '-%lcVALUE'\n",
-            m_appName, argChar);
+        fprintf(stderr, "%hs: error : Expected VALUE for '-%lc%hsVALUE'\n",
+            m_appName, argChar, space ? " " : "");
         return false;
     }
 
     val = shortArgVal;
     return true;
+}
+
+bool
+ArgParser::ReadArgCharsVal(std::wstring_view& val, bool emptyOk) noexcept
+{
+    auto const argChar = CurrentArgChar();
+    auto const shortArgVal = ReadArgCharsVal();
+    return ReadArgValImpl(val, emptyOk, shortArgVal, argChar, false);
 }
 
 bool
@@ -282,17 +294,7 @@ ArgParser::ReadNextArgVal(std::wstring_view& val, bool emptyOk) noexcept
 {
     auto const argChar = CurrentArgChar();
     auto const shortArgVal = ReadNextArgVal();
-    if (!shortArgVal ||
-        (!emptyOk && shortArgVal[0] == 0))
-    {
-        m_argError = true;
-        fprintf(stderr, "%hs: error : Expected VALUE for '-%lc VALUE'\n",
-            m_appName, argChar);
-        return false;
-    }
-
-    val = shortArgVal;
-    return true;
+    return ReadArgValImpl(val, emptyOk, shortArgVal, argChar, true);
 }
 
 bool
@@ -300,17 +302,7 @@ ArgParser::ReadShortArgVal(std::wstring_view& val, bool emptyOk) noexcept
 {
     auto const argChar = CurrentArgChar();
     auto const shortArgVal = ReadShortArgVal();
-    if (!shortArgVal ||
-        (!emptyOk && shortArgVal[0] == 0))
-    {
-        m_argError = true;
-        fprintf(stderr, "%hs: error : Expected VALUE for '-%lc VALUE'\n",
-            m_appName, argChar);
-        return false;
-    }
-
-    val = shortArgVal;
-    return true;
+    return ReadArgValImpl(val, emptyOk, shortArgVal, argChar, true);
 }
 
 bool
@@ -330,15 +322,19 @@ ArgParser::GetLongArgVal(std::wstring_view& val, bool emptyOk) noexcept
 }
 
 bool
-ArgParser::ReadArgCharsVal(unsigned& val, bool zeroOk, int radix) noexcept
+ArgParser::ReadArgValImpl(
+    unsigned& val,
+    bool zeroOk,
+    int radix,
+    _In_opt_z_ PCWSTR shortArgVal,
+    WCHAR argChar,
+    bool space) noexcept
 {
-    auto const argChar = CurrentArgChar();
-    auto const shortArgVal = ReadArgCharsVal();
-    if (shortArgVal[0] == 0)
+    if (shortArgVal == nullptr || shortArgVal[0] == 0)
     {
         m_argError = true;
-        fprintf(stderr, "%hs: error : Expected uint32 VALUE for '-%lcVALUE'\n",
-            m_appName, argChar);
+        fprintf(stderr, "%hs: error : Expected uint32 VALUE for '-%lc%hsVALUE'\n",
+            m_appName, argChar, space ? " " : "");
         return false;
     }
 
@@ -348,27 +344,35 @@ ArgParser::ReadArgCharsVal(unsigned& val, bool zeroOk, int radix) noexcept
     if (errno != 0)
     {
         m_argError = true;
-        fprintf(stderr, "%hs: error : Range error parsing uint32 '-%lc%ls'\n",
-            m_appName, argChar, shortArgVal);
+        fprintf(stderr, "%hs: error : Range error parsing uint32 '-%lc%hs%ls'\n",
+            m_appName, argChar, space ? " " : "", shortArgVal);
         return false;
     }
     else if (end[0])
     {
         m_argError = true;
-        fprintf(stderr, "%hs: error : Trailing characters following uint32 '-%lc%ls'\n",
-            m_appName, argChar, shortArgVal);
+        fprintf(stderr, "%hs: error : Trailing characters following uint32 '-%lc%hs%ls'\n",
+            m_appName, argChar, space ? " " : "", shortArgVal);
         return false;
     }
     else if (!zeroOk && parsedVal == 0)
     {
         m_argError = true;
-        fprintf(stderr, "%hs: error : Expected nonzero uint32 value for '-%lc%ls'\n",
-            m_appName, argChar, shortArgVal);
+        fprintf(stderr, "%hs: error : Expected nonzero uint32 value for '-%lc%hs%ls'\n",
+            m_appName, argChar, space ? " " : "", shortArgVal);
         return false;
     }
 
     val = parsedVal;
     return true;
+}
+
+bool
+ArgParser::ReadArgCharsVal(unsigned& val, bool zeroOk, int radix) noexcept
+{
+    auto const argChar = CurrentArgChar();
+    auto const shortArgVal = ReadArgCharsVal();
+    return ReadArgValImpl(val, zeroOk, radix, shortArgVal, argChar, false);
 }
 
 bool
@@ -376,41 +380,7 @@ ArgParser::ReadNextArgVal(unsigned& val, bool zeroOk, int radix) noexcept
 {
     auto const argChar = CurrentArgChar();
     auto const shortArgVal = ReadNextArgVal();
-    if (!shortArgVal)
-    {
-        m_argError = true;
-        fprintf(stderr, "%hs: error : Expected uint32 VALUE for '-%lc VALUE'\n",
-            m_appName, argChar);
-        return false;
-    }
-
-    wchar_t* end;
-    errno = 0;
-    unsigned parsedVal = wcstoul(shortArgVal, &end, radix);
-    if (errno != 0)
-    {
-        m_argError = true;
-        fprintf(stderr, "%hs: error : Range error parsing uint32 '-%lc %ls'\n",
-            m_appName, argChar, shortArgVal);
-        return false;
-    }
-    else if (end[0])
-    {
-        m_argError = true;
-        fprintf(stderr, "%hs: error : Trailing characters following uint32 '-%lc %ls'\n",
-            m_appName, argChar, shortArgVal);
-        return false;
-    }
-    else if (!zeroOk && parsedVal == 0)
-    {
-        m_argError = true;
-        fprintf(stderr, "%hs: error : Expected nonzero uint32 value for '-%lc %ls'\n",
-            m_appName, argChar, shortArgVal);
-        return false;
-    }
-
-    val = parsedVal;
-    return true;
+    return ReadArgValImpl(val, zeroOk, radix, shortArgVal, argChar, true);
 }
 
 bool
@@ -418,41 +388,7 @@ ArgParser::ReadShortArgVal(unsigned& val, bool zeroOk, int radix) noexcept
 {
     auto const argChar = CurrentArgChar();
     auto const shortArgVal = ReadShortArgVal();
-    if (!shortArgVal)
-    {
-        m_argError = true;
-        fprintf(stderr, "%hs: error : Expected uint32 VALUE for '-%lc VALUE'\n",
-            m_appName, argChar);
-        return false;
-    }
-
-    wchar_t* end;
-    errno = 0;
-    unsigned parsedVal = wcstoul(shortArgVal, &end, radix);
-    if (errno != 0)
-    {
-        m_argError = true;
-        fprintf(stderr, "%hs: error : Range error parsing uint32 '-%lc %ls'\n",
-            m_appName, argChar, shortArgVal);
-        return false;
-    }
-    else if (end[0])
-    {
-        m_argError = true;
-        fprintf(stderr, "%hs: error : Trailing characters following uint32 '-%lc %ls'\n",
-            m_appName, argChar, shortArgVal);
-        return false;
-    }
-    else if (!zeroOk && parsedVal == 0)
-    {
-        m_argError = true;
-        fprintf(stderr, "%hs: error : Expected nonzero uint32 value for '-%lc %ls'\n",
-            m_appName, argChar, shortArgVal);
-        return false;
-    }
-
-    val = parsedVal;
-    return true;
+    return ReadArgValImpl(val, zeroOk, radix, shortArgVal, argChar, true);
 }
 
 bool

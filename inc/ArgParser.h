@@ -70,6 +70,25 @@ class ArgParser
     PCWSTR m_currentArgPos;
     bool m_argError;
 
+private:
+
+    bool
+    ReadArgValImpl(
+        std::wstring_view& val,
+        bool emptyOk,
+        _In_opt_z_ PCWSTR shortArgVal,
+        WCHAR argChar,
+        bool space) noexcept;
+
+    bool
+    ReadArgValImpl(
+        unsigned& val,
+        bool zeroOk,
+        int radix,
+        _In_opt_z_ PCWSTR shortArgVal,
+        WCHAR argChar,
+        bool space) noexcept;
+
 public:
 
     /*
