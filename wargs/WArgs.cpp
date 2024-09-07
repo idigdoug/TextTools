@@ -49,12 +49,17 @@ WarnIfNotNegative(int oldValue, PCSTR argName)
     }
 }
 
-static void
-EscapeArg(std::wstring& escapedArg, std::wstring_view arg)
+void
+WArgs::EscapeArg(std::wstring& escapedArg, std::wstring_view arg) const
 {
     escapedArg.clear();
     escapedArg.push_back(L' ');
-    if (!arg.empty() &&
+
+    if (m_noQuoteArgs)
+    {
+        escapedArg.append(arg);
+    }
+    else if (!arg.empty() &&
         arg.npos == arg.find_first_of(std::wstring_view(L" \"\t\r\n"), 0))
     {
         escapedArg.append(arg);
@@ -546,6 +551,12 @@ void
 WArgs::SetNoRunIfEmpty()
 {
     m_noRunIfEmpty = true;
+}
+
+void
+WArgs::SetNoQuoteArgs()
+{
+    m_noQuoteArgs = true;
 }
 
 void

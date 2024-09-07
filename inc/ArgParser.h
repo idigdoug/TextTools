@@ -183,6 +183,14 @@ public:
     _Ret_opt_z_ PCWSTR
     ReadNextArgVal() noexcept;
 
+    // Consumes and returns the value of the current short arg, null if none.
+    // This selects between behavior of ReadArgCharsVal() and ReadNextArgVal(),
+    // depending on whether we're at the end of the current short arg.
+    // Example: "-abc 123", if current ArgChar is 'b', consumes and returns "c".
+    // Example: "-abc 123", if current ArgChar is 'c', consumes and returns "123".
+    _Ret_opt_z_ PCWSTR
+    ReadShortArgVal() noexcept;
+
     // Returns the value of the current long arg, null if none.
     _Ret_opt_z_ PCWSTR
     GetLongArgVal() const noexcept;
@@ -201,6 +209,14 @@ public:
     bool
     ReadNextArgVal(std::wstring_view& val, bool emptyOk) noexcept;
 
+    // Consumes and returns the value of the current short arg, error if invalid.
+    // This selects between behavior of ReadArgCharsVal() and ReadNextArgVal(),
+    // depending on whether we're at the end of the current short arg.
+    // Example: "-abc 123", if current ArgChar is 'b', consumes and returns "c".
+    // Example: "-abc 123", if current ArgChar is 'c', consumes and returns "123".
+    bool
+    ReadShortArgVal(std::wstring_view& val, bool emptyOk) noexcept;
+
     // Returns the value of the current long arg. Prints error message if none.
     bool
     GetLongArgVal(std::wstring_view& val, bool emptyOk) noexcept;
@@ -218,6 +234,14 @@ public:
     // Example: "-abc 123", if current ArgChar is 'b', consumes and returns "123".
     bool
     ReadNextArgVal(unsigned& val, bool zeroOk, int radix = 0) noexcept;
+
+    // Consumes and returns the value of the current short arg, error if invalid.
+    // This selects between behavior of ReadArgCharsVal() and ReadNextArgVal(),
+    // depending on whether we're at the end of the current short arg.
+    // Example: "-abc 123", if current ArgChar is 'b', consumes and returns "c".
+    // Example: "-abc 123", if current ArgChar is 'c', consumes and returns "123".
+    bool
+    ReadShortArgVal(unsigned& val, bool zeroOk, int radix = 0) noexcept;
 
     // Returns the value of the current long arg. Prints error message if none
     // or invalid.

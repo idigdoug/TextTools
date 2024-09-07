@@ -26,8 +26,8 @@ If no COMMAND is specified, the default command is echo (cmd.exe /c echo).
 -d CHAR, --delimiter=CHAR    Use CHAR instead of whitespace to split up input
                              into arguments. Disables processing of "-E",
                              quotes, and backslashes during input. CHAR is
-                             parsed as a C wchar_t literal, e.g. "-d$",
-                             "-d\t", "-d\x0A" are all accepted.
+                             parsed as a C wchar_t literal, e.g. "-d $",
+                             "-d \t", "-d \x0A" are all accepted.
 -E EOFSTR, --eof=EOFSTR      Stop if any input argument equals EOFSTR.
 -eEOFSTR                     Same as "--eof=EOFSTR" (deprecated).
 -f ENCODING, --from-code=... Encoding of input. Use NNN, cpNNN, utf8,
@@ -45,6 +45,8 @@ If no COMMAND is specified, the default command is echo (cmd.exe /c echo).
                              batch.
 --process-slot-var=VAR       Set environment variable VAR to the parallelism
                              ID. Useful when MAXPROCS > 1.
+-Q, --no-quote-args          When invoking COMMAND, do not add quotes around
+                             arguments that contain whitespace.
 -r, --no-run-if-empty        Disable the standard behavior of running COMMAND
                              once if there are no ARGS.
 -s MAXCHARS, --max-chars=... Limits each batch's command length to MAXCHARS.
@@ -172,9 +174,13 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                         wargs.SetMaxProcs(uval, "--max-procs");
                     }
                 }
-                else if (ap.CurrentArgNameMatches(2, L"no-run-if-empty"))
+                else if (ap.CurrentArgNameMatches(4, L"no-run-if-empty"))
                 {
                     wargs.SetNoRunIfEmpty();
+                }
+                else if (ap.CurrentArgNameMatches(4, L"no-quote-args"))
+                {
+                    wargs.SetNoQuoteArgs();
                 }
                 else if (ap.CurrentArgNameMatches(2, L"null"))
                 {
@@ -232,7 +238,7 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                         ap.SetArgErrorIfFalse(wargs.SetDelimiter(val, "-0"));
                         break;
                     case 'a':
-                        if (ap.ReadNextArgVal(val, false))
+                        if (ap.ReadShortArgVal(val, false))
                         {
                             wargs.SetInputFilename(val, "-a");
                         }
@@ -244,13 +250,13 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                         wargs.SetInputClipboard("-c");
                         break;
                     case 'd':
-                        if (ap.ReadNextArgVal(val, false))
+                        if (ap.ReadShortArgVal(val, false))
                         {
                             ap.SetArgErrorIfFalse(wargs.SetDelimiter(val, "-d"));
                         }
                         break;
                     case 'E':
-                        if (ap.ReadNextArgVal(val, true))
+                        if (ap.ReadShortArgVal(val, true))
                         {
                             wargs.SetEofStr(val, "-E");
                         }
@@ -259,13 +265,13 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                         wargs.SetEofStr(ap.ReadArgCharsVal(), "-e");
                         break;
                     case 'f':
-                        if (ap.ReadNextArgVal(val, false))
+                        if (ap.ReadShortArgVal(val, false))
                         {
                             ap.SetArgErrorIfFalse(wargs.SetInputEncoding(val, "-f"));
                         }
                         break;
                     case 'I':
-                        if (ap.ReadNextArgVal(val, false))
+                        if (ap.ReadShortArgVal(val, false))
                         {
                             wargs.SetReplaceStr(val, "-I");
                         }
@@ -279,7 +285,7 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                         wargs.SetReplaceStr(val, "-i");
                         break;
                     case 'L':
-                        if (ap.ReadNextArgVal(uval, false, 10))
+                        if (ap.ReadShortArgVal(uval, false, 10))
                         {
                             wargs.SetMaxLines(uval, "-L");
                         }
@@ -295,7 +301,7 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                         }
                         break;
                     case 'n':
-                        if (ap.ReadNextArgVal(uval, false, 10))
+                        if (ap.ReadShortArgVal(uval, false, 10))
                         {
                             wargs.SetMaxArgs(uval, "-n");
                         }
@@ -304,7 +310,7 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                         wargs.SetOpenTty();
                         break;
                     case 'P':
-                        if (ap.ReadNextArgVal(uval, true, 10))
+                        if (ap.ReadShortArgVal(uval, true, 10))
                         {
                             wargs.SetMaxProcs(uval, "-P");
                         }
@@ -312,11 +318,14 @@ wmain(int argc, _In_count_(argc) PWSTR argv[])
                     case 'p':
                         wargs.SetInteractive();
                         break;
+                    case 'Q':
+                        wargs.SetNoQuoteArgs();
+                        break;
                     case 'r':
                         wargs.SetNoRunIfEmpty();
                         break;
                     case 's':
-                        if (ap.ReadNextArgVal(uval, false, 10))
+                        if (ap.ReadShortArgVal(uval, false, 10))
                         {
                             wargs.SetMaxChars(uval, "-s");
                         }

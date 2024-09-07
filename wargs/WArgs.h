@@ -47,11 +47,15 @@ class WArgs
     bool m_verbose = 0; // -t, --verbose
     bool m_exitIfSizeExceeded = 0; // -x, --exit
     bool m_showLimits = 0; // --show-limits
+    bool m_noQuoteArgs = 0; // -Q, --no-quote-args
 
 private:
 
     static [[nodiscard]] CodePageCategory
     ParseEncoding(std::wstring_view value, PCSTR argName, _Inout_ Encoding* pEncoding);
+
+    void
+    EscapeArg(std::wstring& escapedArg, std::wstring_view arg) const;
 
 public:
 
@@ -96,6 +100,9 @@ public:
 
     void
     SetNoRunIfEmpty();
+
+    void
+    SetNoQuoteArgs();
 
     void
     SetMaxChars(unsigned value, PCSTR argName);
